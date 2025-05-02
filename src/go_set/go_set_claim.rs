@@ -1,6 +1,5 @@
 use crate::feed_id::FeedId;
-use crate::go_set::GOSet;
-use crate::go_set_xor::GOSetXor;
+use crate::go_set::{GOSet, GOSetXor};
 
 use crate::Error;
 

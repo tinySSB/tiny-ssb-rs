@@ -1,9 +1,7 @@
 pub mod feed_id;
 pub mod go_set;
-pub mod go_set_claim;
-pub mod go_set_xor;
 
-use go_set_claim::GOSetClaim;
+use go_set::GOSetClaim;
 
 pub enum Error {}
 

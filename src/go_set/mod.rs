@@ -1,5 +1,10 @@
+mod go_set_claim;
+mod go_set_xor;
+
 use crate::feed_id::FeedId;
-use crate::go_set_xor::GOSetXor;
+
+pub use go_set_claim::GOSetClaim;
+pub use go_set_xor::GOSetXor;
 
 pub struct GOSet {
     feed_ids: Vec<FeedId>,
