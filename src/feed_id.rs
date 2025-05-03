@@ -1,8 +1,8 @@
 use mem_cmp::*;
 use std::cmp::Ordering;
 
-#[derive(PartialEq, Debug)]
-pub struct FeedId([u8; 32]);
+#[derive(PartialEq, Eq, Debug, Copy, Clone)]
+pub struct FeedId(pub [u8; 32]);
 
 impl FeedId {
     pub fn encode(&self) -> [u8; 32] {
@@ -16,6 +16,12 @@ impl PartialOrd for FeedId {
     }
 }
 
+impl Ord for FeedId {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.0.mem_cmp(&other.0)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -23,6 +29,7 @@ mod tests {
 
     #[test]
     fn partial_eq() {
+        // this might be testing eq??
         let feed_a = FeedId([0; 32]);
         let feed_b = FeedId([0; 32]);
         let feed_c = FeedId([4; 32]);
