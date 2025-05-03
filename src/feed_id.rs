@@ -1,4 +1,6 @@
 use mem_cmp::*;
+// TODO: make an issue for the spec to tighten the definition of "sort"
+// TODO: check mem_cmp behaves the same as the reference implementation
 use std::cmp::Ordering;
 
 #[derive(PartialEq, Eq, Debug, Copy, Clone)]

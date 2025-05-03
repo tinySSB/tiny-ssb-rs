@@ -12,6 +12,7 @@ pub struct GOSet {
 impl GOSet {
     pub fn new(feed_ids: &[FeedId]) -> Self {
         let mut new_feed_ids = Vec::from(feed_ids);
+        // TODO: discuss from() magic with Piet
         new_feed_ids.sort();
 
         Self {
