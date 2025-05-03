@@ -5,4 +5,3 @@ impl GOSetXor {
         todo!()
     }
 }
-

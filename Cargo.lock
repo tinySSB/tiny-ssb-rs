@@ -77,6 +77,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4a5f13b858c8d314ee3e8f639011f7ccefe71f97f96e50151fb991f267928e2c"
 
 [[package]]
+name = "mem_cmp"
+version = "0.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cf29e432e02999285b35a0dca13624beb953d31f0c2d1a3cd5d36743f2f70d67"
+
+[[package]]
 name = "memchr"
 version = "2.7.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -155,6 +161,7 @@ name = "tiny-ssb-rs"
 version = "0.1.0"
 dependencies = [
  "bipf-rs",
+ "mem_cmp",
  "serde_json",
 ]
 
