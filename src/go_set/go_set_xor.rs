@@ -1,7 +1,8 @@
-pub struct GOSetXor([u8; 32]);
+#[derive(Debug, PartialEq)]
+pub struct GOSetXor(pub [u8; 32]);
 
 impl GOSetXor {
-    pub fn encode() -> [u8; 32] {
-        todo!()
+    pub fn encode(&self) -> [u8; 32] {
+        self.0.clone()
     }
 }

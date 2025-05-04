@@ -23,7 +23,13 @@ impl GOSet {
         todo!()
     }
     pub fn xor(&self) -> GOSetXor {
-        todo!();
+        let mut xor: [u8; 32] = [0; 32];
+        for feed_id in self.feed_ids.iter() {
+            for i in 0..32 {
+                xor[i] = xor[i] ^ feed_id.0[i];
+            }
+        }
+        GOSetXor(xor)
     }
     pub fn highest_feed_id(&self) -> Option<&FeedId> {
         self.feed_ids.last()
@@ -36,6 +42,15 @@ impl GOSet {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn xor() {
+        let feed_a = FeedId([255; 32]);
+        let feed_b = FeedId([1; 32]);
+
+        let go_set = GOSet::new(&[feed_a, feed_b]);
+        assert_eq!(go_set.xor().encode(), [254; 32]);
+    }
 
     #[test]
     fn highest_feed_id() {
