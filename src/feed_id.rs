@@ -7,6 +7,8 @@ use std::cmp::Ordering;
 pub struct FeedId(pub [u8; 32]);
 
 impl FeedId {
+    pub const LENGTH: usize = 32;
+
     pub fn encode(&self) -> [u8; 32] {
         self.0.clone()
     }
