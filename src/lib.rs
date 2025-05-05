@@ -3,6 +3,7 @@ pub mod go_set;
 
 use go_set::GOSetClaim;
 
+#[derive(Debug)]
 pub enum Error {}
 
 enum WirePacket {

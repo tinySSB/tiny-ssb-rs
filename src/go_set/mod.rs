@@ -19,21 +19,27 @@ impl GOSet {
             feed_ids: new_feed_ids,
         }
     }
+
     pub fn count(&self) -> u8 {
-        todo!()
+        // NOTE: u8 is the max currently supported by the spec
+        // WARNING: this panics if it doesn't fit u8
+        self.feed_ids.len().try_into().unwrap()
     }
+
     pub fn xor(&self) -> GOSetXor {
         let mut xor: [u8; 32] = [0; 32];
         for feed_id in self.feed_ids.iter() {
             for i in 0..32 {
-                xor[i] = xor[i] ^ feed_id.0[i];
+                xor[i] ^= feed_id.0[i];
             }
         }
         GOSetXor(xor)
     }
+
     pub fn highest_feed_id(&self) -> Option<&FeedId> {
         self.feed_ids.last()
     }
+
     pub fn lowest_feed_id(&self) -> Option<&FeedId> {
         self.feed_ids.first()
     }
@@ -42,6 +48,15 @@ impl GOSet {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn count() {
+        let feed_a = FeedId([255; 32]);
+        let feed_b = FeedId([1; 32]);
+
+        let go_set = GOSet::new(&[feed_a, feed_b]);
+        assert_eq!(go_set.count(), 2)
+    }
 
     #[test]
     fn xor() {
