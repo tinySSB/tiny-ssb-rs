@@ -5,7 +5,7 @@ use crate::Error;
 
 #[derive(Debug, PartialEq)]
 enum GOSetClaimError {
-    InvlalidDMX,
+    InvalidDMX,
     InvalidTypeCode,
 }
 
@@ -86,7 +86,7 @@ impl GOSetClaim {
         }
 
         if !dmx.eq(&Self::GOSET_DMX) {
-            return Err(GOSetClaimError::InvlalidDMX);
+            return Err(GOSetClaimError::InvalidDMX);
         }
 
         if !type_code.eq(&[b'c']) {
@@ -136,7 +136,7 @@ mod tests {
         println!("claim with incorrect dmx:\n {:?}", claim);
 
         match GOSetClaim::decode(&claim) {
-            Err(GOSetClaimError::InvlalidDMX) => {} // passed
+            Err(GOSetClaimError::InvalidDMX) => {} // passed
             _ => panic!("Expected InvalidDMX error"),
         }
     }
