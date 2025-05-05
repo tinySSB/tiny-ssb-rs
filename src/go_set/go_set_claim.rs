@@ -3,6 +3,12 @@ use crate::go_set::{GOSet, GOSetXor};
 
 use crate::Error;
 
+#[derive(Debug, PartialEq)]
+enum GOSetClaimError {
+    InvlalidDMX,
+    InvalidTypeCode,
+}
+
 #[derive(Debug)]
 pub struct GOSetClaim {
     lowest_feed_id: FeedId,
@@ -28,78 +34,70 @@ impl GOSetClaim {
         // [DMX (7B) | 'c' (1 byte) | lowest FeedId (32 bytes) | highest FeedId (32 bytes) | XOR (32 bytes) | cnt (1 byte) ]
         let mut claim = [0; 105];
 
-        let mut offset: usize = 0;
-
-        // DMX
-        for (i, byte) in Self::GOSET_DMX.into_iter().enumerate() {
-            claim[offset + i] = byte;
-        }
-        offset += Self::GOSET_DMX.len();
-
-        // c
-        let byte = "c".as_bytes()[0];
-        claim[offset] = byte;
-        offset += 1;
-
-        // lowest FeedId
-        let lowest_feed_id_bytes = go_set.lowest_feed_id().unwrap().encode();
-        for (i, byte) in lowest_feed_id_bytes.into_iter().enumerate() {
-            claim[offset + i] = byte;
-        }
-        offset += lowest_feed_id_bytes.len();
-
-        // highest FeedId
-        let highest_feed_id_bytes = go_set.highest_feed_id().unwrap().encode();
-        for (i, byte) in highest_feed_id_bytes.into_iter().enumerate() {
-            claim[offset + i] = byte;
-        }
-        offset += highest_feed_id_bytes.len();
-
+        let dmx = Self::GOSET_DMX;
+        let type_code: [u8; 1] = [b'c'];
+        let lowest_feed_id = go_set.lowest_feed_id().unwrap().encode();
+        let highest_feed_id = go_set.highest_feed_id().unwrap().encode();
         let xor = go_set.xor().encode();
-        for (i, byte) in xor.into_iter().enumerate() {
-            claim[offset + i] = byte;
-        }
-        offset += xor.len();
+        let count: [u8; 1] = [go_set.count()];
 
-        let count = go_set.count();
-        claim[offset] = count;
+        let chunks: [&[u8]; 6] = [
+            &dmx,
+            &type_code,
+            &lowest_feed_id,
+            &highest_feed_id,
+            &xor,
+            &count,
+        ];
+
+        let mut offset: usize = 0;
+        for chunk in chunks {
+            let len = chunk.len();
+            claim[offset..offset + len].copy_from_slice(chunk);
+            offset += len;
+        }
 
         claim
     }
 
-    pub fn decode(bytes: &[u8; 105]) -> Result<Self, Error> {
+    pub fn decode(bytes: &[u8; 105]) -> Result<Self, GOSetClaimError> {
+        let mut dmx = [0; Self::GOSET_DMX.len()];
+        let mut type_code = [0; 1];
+        let mut lowest_feed_id = [0; FeedId::LENGTH];
+        let mut highest_feed_id = [0; FeedId::LENGTH];
+        let mut xor = [0; GOSetXor::LENGTH];
+        let mut count = [0; 1];
+
+        let chunks: [&mut [u8]; 6] = [
+            &mut dmx,
+            &mut type_code,
+            &mut lowest_feed_id,
+            &mut highest_feed_id,
+            &mut xor,
+            &mut count,
+        ];
+
         let mut offset: usize = 0;
-        // TODO: check DMX
-        offset += Self::GOSET_DMX.len();
 
-        // TODO: check type: c
-        offset += 1;
-
-        let mut lowest_feed_id_bytes = [0; FeedId::LENGTH];
-        for i in 0..FeedId::LENGTH {
-            lowest_feed_id_bytes[i] = bytes[offset + i];
+        for chunk in chunks {
+            let len = chunk.len();
+            chunk.copy_from_slice(&bytes[offset..offset + len]);
+            offset += len;
         }
-        offset += FeedId::LENGTH;
 
-        let mut highest_feed_id_bytes = [0; FeedId::LENGTH];
-        for i in 0..FeedId::LENGTH {
-            highest_feed_id_bytes[i] = bytes[offset + i];
+        if !dmx.eq(&Self::GOSET_DMX) {
+            return Err(GOSetClaimError::InvlalidDMX);
         }
-        offset += FeedId::LENGTH;
 
-        let mut xor_bytes = [0; GOSetXor::LENGTH];
-        for i in 0..GOSetXor::LENGTH {
-            xor_bytes[i] = bytes[offset + i];
+        if !type_code.eq(&[b'c']) {
+            return Err(GOSetClaimError::InvalidTypeCode);
         }
-        offset += GOSetXor::LENGTH;
-
-        let count = bytes[offset];
 
         Ok(GOSetClaim {
-            lowest_feed_id: FeedId(lowest_feed_id_bytes),
-            highest_feed_id: FeedId(highest_feed_id_bytes),
-            xor: GOSetXor(xor_bytes),
-            count: count,
+            lowest_feed_id: FeedId(lowest_feed_id),
+            highest_feed_id: FeedId(highest_feed_id),
+            xor: GOSetXor(xor),
+            count: count[0],
         })
     }
 }
@@ -113,17 +111,49 @@ mod tests {
         let feed_a = FeedId([255; 32]);
         let feed_b = FeedId([1; 32]);
         let feed_c = FeedId([2; 32]);
-
         let go_set = GOSet::new(&[feed_a, feed_b, feed_c]);
+
         let claim = GOSetClaim::encode(&go_set);
-        println!("encoded claim: {:?}", claim);
+        println!("encoded claim:\n {:?}", claim);
 
         let result = GOSetClaim::decode(&claim).unwrap();
-        println!("decoded claim: {:?}", result);
+        println!("decoded claim:\n {:?}", result);
 
         assert_eq!(&result.lowest_feed_id, go_set.lowest_feed_id().unwrap());
         assert_eq!(&result.highest_feed_id, go_set.highest_feed_id().unwrap());
         assert_eq!(result.xor, go_set.xor());
         assert_eq!(result.count, go_set.count());
+    }
+
+    #[test]
+    fn claim_wrong_dmx() {
+        let feed_a = FeedId([255; 32]);
+        let go_set = GOSet::new(&[feed_a]);
+
+        let mut claim = GOSetClaim::encode(&go_set);
+        let wrong_dmx = [6; 7];
+        claim[0..7].copy_from_slice(&wrong_dmx);
+        println!("claim with incorrect dmx:\n {:?}", claim);
+
+        match GOSetClaim::decode(&claim) {
+            Err(GOSetClaimError::InvlalidDMX) => {} // passed
+            _ => panic!("Expected InvalidDMX error"),
+        }
+    }
+
+    #[test]
+    fn claim_wrong_type_code() {
+        let feed_a = FeedId([255; 32]);
+        let go_set = GOSet::new(&[feed_a]);
+
+        let mut claim = GOSetClaim::encode(&go_set);
+        let wrong_type_code = [b'W'];
+        claim[7..8].copy_from_slice(&wrong_type_code);
+        println!("claim with incorrect type_code:\n {:?}", claim);
+
+        match GOSetClaim::decode(&claim) {
+            Err(GOSetClaimError::InvalidTypeCode) => {} // passed
+            _ => panic!("Expected InvalidTypeCode error"),
+        }
     }
 }

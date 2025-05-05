@@ -1,20 +1,20 @@
 pub mod feed_id;
 pub mod go_set;
 
-use go_set::GOSetClaim;
+// use go_set::GOSetClaim;
 
 #[derive(Debug)]
 pub enum Error {}
 
-enum WirePacket {
-    // Dunno about this. Might be bytes not sure
-    Replication(GOSetClaim),
-    Log(),
-}
+// enum WirePacket {
+//     // Dunno about this. Might be bytes not sure
+//     Replication(GOSetClaim),
+//     Log(),
+// }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    // use super::*;
     use bipf_rs::bipf::{Bipf, decode};
 
     #[test]
